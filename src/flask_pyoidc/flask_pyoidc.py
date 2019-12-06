@@ -194,7 +194,8 @@ class OIDCAuthentication:
                 session = UserSession(flask.session, provider_name)
                 client = self.clients[session.current_provider]
 
-                if session.should_refresh(client.session_refresh_interval_seconds):
+                if session.last_authenticated is not None and \
+                   session.should_refresh(client.session_refresh_interval_seconds):
                     logger.debug('user auth will be refreshed "silently"')
                     return self._authenticate(client, interactive=False)
                 elif session.is_authenticated():

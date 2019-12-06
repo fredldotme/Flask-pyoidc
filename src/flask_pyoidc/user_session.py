@@ -35,8 +35,9 @@ class UserSession:
         return self._session_storage.get('last_authenticated') is not None
 
     def should_refresh(self, refresh_interval_seconds=None):
-        return refresh_interval_seconds is not None and \
-               self._refresh_time(refresh_interval_seconds) < time.time()
+        current_time = time.time()
+        token_exp = (self._session_storage.get('token_exp', 0) - 20)
+        return current_time > token_exp
 
     def _refresh_time(self, refresh_interval_seconds):
         last = self._session_storage.get('last_authenticated', 0)
@@ -56,10 +57,13 @@ class UserSession:
                 self._session_storage[session_key] = value
 
         auth_time = int(time.time())
+        exp_time = int(time.time() + 300)
         if id_token:
             auth_time = id_token.get('auth_time', auth_time)
+            exp_time = id_token.get('exp', exp_time)
 
         self._session_storage['last_authenticated'] = auth_time
+        self._session_storage['token_exp'] = exp_time
         set_if_defined('access_token', access_token)
         set_if_defined('id_token', id_token)
         set_if_defined('id_token_jwt', id_token_jwt)
